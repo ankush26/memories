@@ -1,10 +1,13 @@
 import express from "express";
 import mongoose from 'mongoose'
 import postRoutes from './routes/posts.js'
+import cors from 'cors';
+
 const app = express()
 const port = 3001;
 
 app.use(express.json());
+app.use(cors());
 
 app.use('/posts', postRoutes)
 

@@ -1,3 +1,4 @@
+import mongoose from "mongoose";
 import PostMessage from "../models/posts.js"
 
 export const getPosts = async (req, res) => { 
@@ -9,22 +10,50 @@ export const getPosts = async (req, res) => {
     }
 }
 
-export const getPost = (req, res) => { 
-    res.send('get post')
+export const getPost = async (req, res) => { 
+    const {id} = req.params;
+    try {
+        const postMessage = await PostMessage.findById(id)
+        res.status(200).json(postMessage)
+    } catch (error) {
+        res.status(400).json({message: error.message})
+    }
 }
 
-export const createPost = (req, res) => { 
-    res.send('create post')
+export const createPost = async (req, res) => { 
+    const {title, message, creator, tags, selectFile} = req.body;
+    const newPostMessage = new PostMessage({title, message, creator, tags, selectFile})
+    try {
+        await newPostMessage.save()
+        res.status(201).json(newPostMessage)
+    } catch (error) {
+        res.status(409).json({ message: error.message });
+    }    
 }
 
-export const updatePost = (req, res) => { 
-    res.send('update post')
+export const updatePost = async (req, res) => { 
+    const {id} = req.params;
+    const {title, message, creator, tags, selectFile} = req.body;
+
+    if(!mongoose.Types.ObjectId.isValid(id)) return res.status(404).send(`No post with id: ${id}`)
+
+    const updatedPost = { creator, title, message, tags, selectFile, _id: id };
+
+    await PostMessage.findByIdAndUpdate(id, updatedPost, {new: true})
+    res.json(updatedPost)
 }
 
-export const deletePost = (req, res) => { 
-    res.send('delete post')
+export const deletePost = async (req, res) => { 
+    const { id } = req.params;
+    if(!mongoose.Types.ObjectId.isValid(id)) return res.status(404).send(`No post wid id  ${id}`)
+    await PostMessage.findByIdAndRemove(id)
+    res.json({message: "Post Deleted successfully"})
 }
 
-export const likePost = (req, res) => { 
-    res.send('like post')
+export const likePost = async (req, res) => { 
+    const { id } = req.params;
+    if(!mongoose.Types.ObjectId.isValid(id)) return res.status(404).send(`No post with id ${id}`)
+    const post = await PostMessage.findById(id)
+    const updatedPost = await PostMessage.findByIdAndUpdate(id, { likeCount: post.likeCount + 1}, {new: true})
+    res.json(updatedPost)
 }
